@@ -1,11 +1,11 @@
 # Load Modules
 Import-Module ActiveDirectory
 
-  $From = "noreply@domain.com"
-  $To = "teamone@domain.com"
-  $Cc = "teamtwo@domain.com"
-  $Subject = (Get-Date).ToString("%d-MMMM-yyyy") + " - Security Report: Active Directory vs LANDesk"
-  $SMTPServer = "mailserver.domain.com"
+$From = "noreply@domain.com"
+$To = "teamone@domain.com"
+$Cc = "teamtwo@domain.com"
+$Subject = (Get-Date).ToString("%d-MMMM-yyyy") + " - Security Report: Active Directory vs LANDesk"
+$SMTPServer = "mailserver.domain.com"
 
 # Define HTML Report Header Style
 $Header = @"
