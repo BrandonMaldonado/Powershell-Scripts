@@ -32,20 +32,12 @@ function New-HPDriverMatrix {
     
     [XML]$xml = Get-Content -Path $($HPCabDLLocation + 'HPDrivers\' + 'CabExtract.xml')
 
-    #$HPOSList = ($xml).ChildNodes.SelectNodes("*/OSList/OS")
-
-    #$HPWin10Ver = $HPOSList | Select-Object Name | Where-Object {$_.Name -match "^Windows 10 64-bit, (\d\d\d\d)"} | Sort-Object -Property Name -Descending
-
     $HPSoftPaqList = ($xml).ChildNodes.SelectNodes("*/SoftPaqList/SoftPaq")
 
     $HPProductList = ($xml).ChildNodes.SelectNodes("*/ProductOSDriverPackList/ProductOSDriverPack")
 
     # TO Do: Replace with dynamic query from LANDesk
-    $ModelsInEnv = @("HP Compaq Elite 8300", "HP EliteBook 820 G1", "HP EliteBook 820 G2", "HP EliteBook 820 G3", "HP EliteBook 820 G4", "HP EliteBook 830 G5",
-        "HP EliteBook 840 G1", "HP EliteBook 840 G2", "HP EliteBook 840 G3", "HP EliteBook 840 G4", "HP EliteBook 840 G5", "HP EliteBook 850 G2", "HP EliteBook 850 G4",
-        "HP EliteBook Folio 1040 G2", "HP EliteBook Folio 9480m", "HP EliteBook x360 1030 G2", "HP EliteBook x360 1030 G3", "HP EliteDesk 800 G1", "HP EliteDesk 800 G2",
-        "HP EliteDesk 800 G3", "HP EliteDesk 800 G4", "HP EliteOne 800 G1", "HP EliteOne 800 G1", "HP EliteOne 800 G2", "HP EliteOne 800 G3", "HP EliteOne 800 G4",
-        "HP ProBook 430 G4", "HP ProBook 450 G3", "HP ProDesk 400 G1", "HP ProDesk 600 G1", "HP ProDesk 600 G2", "HP ProDesk 600 G3", "HP ZBook 14 G2")
+    $ModelsInEnv = @("HP Compaq Elite 8300", "HP EliteBook 820 G1", "HP EliteBook 820 G2")
 
     foreach ($model in $ModelsInEnv) {
         $FetchModelDetail = $HPProductList | Where-Object { ($_.SystemName -match $model) -and ($_.OSName -match "^Windows 10 64-bit, \d\d\d\d") } |
@@ -100,7 +92,6 @@ function Start-HPDriverDownload {
 
         #$driver
         Write-Host "Processing" $driver.'System Name'.Replace('*','')
-        #Write-Host "SoftPak ID: " $driver.'SoftPaq ID'
         
         # Check that windows download folder exists
         if ((Test-Path -Path $($HPCabDLLocation + 'HPDrivers\Windows10\')) -eq $false) {
