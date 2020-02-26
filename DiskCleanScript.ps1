@@ -5,6 +5,9 @@ $ip = (Get-NetIPConfiguration | Where-Object { ($_.IPv4DefaultGateway -ne $null)
 Function IsUEFI {
 
     <#
+.Credit
+   Chris J Warwick
+   https://gallery.technet.microsoft.com/scriptcenter/Determine-UEFI-or-Legacy-7dc79488
 .Synopsis
    Determines underlying firmware (BIOS) type and returns True for UEFI or False for legacy BIOS.
 .DESCRIPTION
@@ -65,10 +68,6 @@ function diskSelection {
     DO {
 
         # Get User Selection and check that the selection is valid
-        if ($deviceModel -eq 'HP EliteBook x360 1030 G4') {
-            Write-Host -ForegroundColor Yellow "Warning: $deviceModel detected - please note this model usually ships with two drives. Please select the largest disk.`n"
-
-        }
         $userDiskSelection = Read-Host -Prompt "What disk would you like to select? `nVaild Options: $($getDisks.DiskNumber -split ','), (q)uit, (m)ain menu"
         $vaildDiskSelection = $getDisks.DiskNumber -contains $userDiskSelection
 
@@ -273,8 +272,6 @@ function Launcher {
         Write-Host "`n"
         Write-Host -ForegroundColor Cyan "Helpful Hints"
         Write-Host "  * What does this do?`n    Clears existing disk paritions and recreates the standard paritions. This is a requirement at the moment."
-        Write-Host "  * Imaging isn't working. Who do I contact?`n    support@domain.com"
-        Write-Host "  * Why is imaging slow?`n    All imaging data is pulled from your file server. If its slow, please make sure your file server is connected via Gigabit uplink and if possible move this PC to a gigaswitch."
         Write-Host -FOregroundColor Cyan "`nOptions"
         Write-Host "  (S)art`n  (Q)uit"
         $userInput = Read-Host -Prompt "What do you want to do?"
