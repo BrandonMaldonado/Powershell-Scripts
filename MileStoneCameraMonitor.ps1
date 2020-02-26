@@ -32,7 +32,7 @@ foreach ($device in $deviceObjs){
         
         # Add to Report
         $item = New-Object PSObject
-        $item | Add-Member -type NoteProperty -Name 'Site Name' -Value $($device.DisplayName)
+        $item | Add-Member -type NoteProperty -Name 'Camera Name' -Value $($device.DisplayName)
         $item | Add-Member -type NoteProperty -Name 'Camera IP' -Value $($device.IPAddress)
         $item | Add-Member -type NoteProperty -Name 'Online' -Value $($camTestResult)
         $report += $item
@@ -56,7 +56,7 @@ tr:nth-child(odd) {background: #FFF}
 "@
 
 if($report){
-  $HTMLReport = $report | Sort-Object 'Site Name' | ConvertTo-Html -property 'Site Name','Camera IP','Online' -Head $Header -Pre "<h2>Weekly Report - Offline Cameras</h2><p><b>Generated:</b> $(get-date)</p>"
+  $HTMLReport = $report | Sort-Object 'Camera Name' | ConvertTo-Html -property 'Camera Name','Camera IP','Online' -Head $Header -Pre "<h2>Weekly Report - Offline Cameras</h2><p><b>Generated:</b> $(get-date)</p>"
 
   Send-MailMessage -To $To -Cc $Cc -From $From -SmtpServer $SMTPServer -Subject $Subject -Body ($HTMLReport | Out-String) -BodyAsHtml
 }
