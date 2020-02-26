@@ -1,6 +1,3 @@
-# Clear Screen
-Clear-Host
-
 # Declare the core server name
 $coreServer = 'landesk-server'
 
@@ -77,16 +74,11 @@ if ($mappedDriveFound) {
     $driverTable.GetEnumerator() | ForEach-Object {
         $modelFamily = $_.Key
 
-        # Debug
-        #Write-Host "Current Comparison:"
-        #$modelFamily
-        #$computerModel
-
         if ($computerModel -like $modelFamily) {
             $Modelkey = $_.Key
             $SPvalue = $_.Value
 
-            # Set no match to false to prevent loop / saftey mech
+            # Set no match to false to prevent loop
             $noMatch = $false
             
             Write-Host -ForegroundColor Green "Good News! I found a driver package for this model from the DriverMatrix."
