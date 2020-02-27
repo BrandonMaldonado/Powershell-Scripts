@@ -4,7 +4,7 @@ Import-Module ActiveDirectory
 $From = "noreply@domain.com"
 $To = "teamone@domain.com"
 $Cc = "teamtwo@domain.com"
-$Subject = (Get-Date).ToString("%d-MMMM-yyyy") + " - Security Report: Active Directory vs LANDesk"
+$Subject = (Get-Date).ToString("%d-MMMM-yyyy") + " - Active Directory vs LANDesk"
 $SMTPServer = "mailserver.domain.com"
 
 # Define HTML Report Header Style
@@ -20,12 +20,16 @@ tr:nth-child(odd) {background: #FFF}
 "@
 
 # Get ALL AD Computers and Export
-$ADdata = get-adcomputer -Filter * -searchbase "OU=Computers,DC=domain,DC=com" | Select-Object @{ Name = "Device Name"; Expression = { $_. "Name" } } | Sort-Object 'Device Name' -Unique
+$ADdata = get-adcomputer -Filter * -searchbase "OU=Computers,DC=domain,DC=com" | 
+Select-Object @{ Name = "Device Name"; Expression = { $_. "Name" } } | Sort-Object 'Device Name' -Unique
 
 # Connect to Property LanDesk and Export
-$ldWS = New-WebServiceProxy -Uri https://<YOUR LANDESK SERVER>/MBSDKService/MsgSDK.asmx?WSDL -UseDefaultCredential # Replace with your landesk server.
+# Replace with your LANDesk server and ensure you have permissions to access the API.
+$ldWS = New-WebServiceProxy -Uri https://<YOUR LANDESK SERVER>/MBSDKService/MsgSDK.asmx?WSDL -UseDefaultCredential
 $ldWS.ResolveScopeRights() | Out-Null
-$LDlist = $ldWS.RunQuery("<INSERT QUERY NAME>") # Query in LanDesk will just list all workstations in the enviorment.
+
+# Query in LanDesk will just list all workstations in the enviorment.
+$LDlist = $ldWS.RunQuery("<INSERT QUERY NAME>") 
 
 # Hashtables
 $LANDeskTable = @{}
@@ -53,7 +57,7 @@ $missingPCs | Sort-Object 'Device Name' | Format-Table -HideTableHeaders
 Write-Host ''
 
 if($missingPCs){
-  $HTMLReport = $missingPCs | Sort-Object 'Device Name' | ConvertTo-Html -property 'Device Name' -Head $Header -pre "<h1>Security Report: AD vs LANDesk</h1><p><b>Generated:</b> $(get-date)<br /><b>Total Records Processed:</b> $($missingPCs | Measure | Select-Object Count | ft -HideTableHeaders | Out-String)</p> <P>PCs on this list either: Need to be removed from Active Directory or added to LanDesk immediately"
+  $HTMLReport = $missingPCs | Sort-Object 'Device Name' | ConvertTo-Html -property 'Device Name' -Head $Header -pre "<h1>Active Directory vs LANDesk</h1><p><b>Generated:</b> $(get-date)<br /><b>Total Records Processed:</b> $($missingPCs | Measure | Select-Object Count | ft -HideTableHeaders | Out-String)</p> <P>PCs on this list either: Need to be removed from Active Directory or added to LanDesk immediately"
 
   # Email Report
   Send-MailMessage -To $To -Cc $Cc -From $From -SmtpServer $SMTPServer -Subject $Subject -Body ($HTMLReport | Out-String) -BodyAsHtml
