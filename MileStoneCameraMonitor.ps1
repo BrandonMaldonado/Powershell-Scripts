@@ -55,7 +55,7 @@ foreach ($device in $deviceObjs) {
 }
 
 if ($report) {
-    $HTMLReport = $report | Sort-Object 'Camera Name' | ConvertTo-Html -property 'Camera Name', 'Camera IP', 'Online' -Head $Header -Pre "<h2>Property Weekly Report - Offline MDF Cameras</h2><p><b>Generated:</b> $(get-date)</p>"
+    $HTMLReport = $report | Sort-Object 'Camera Name' | ConvertTo-Html -property 'Camera Name', 'Camera IP', 'Online' -Head $Header -Pre "<h2>Weekly Report - Offline Cameras</h2><p><b>Generated:</b> $(get-date)</p>"
 
     Send-MailMessage -To $To -Cc $Cc -From $From -SmtpServer $SMTPServer -Subject $Subject -Body ($HTMLReport | Out-String) -BodyAsHtml
 }
