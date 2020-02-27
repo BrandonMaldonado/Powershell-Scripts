@@ -1,10 +1,8 @@
-# Before Using
-# Ensure AL_Agent is set to manual
+# Before using ensure AL_Agent is set to manual on the golden image.
 
 # AL Personas Location
-$ALPersonaRepository = '\\centralserver\ALPersonaRepository'
+$ALPersonaRepository = '\\centralserver\ALPersona'
 $ALLocalPersonaLocation = 'C:\Program Files (x86)\Common Files\AlertLogic'
-$ALStageLoc = 'C:\ALstage'
 $HostName = $env:COMPUTERNAME
 $MyALPersona = $ALPersonaRepository + "\" + $HostName
 $ALService = Get-Service -name al_agent
@@ -28,27 +26,29 @@ function Start-PersonaCheck {
         }
 
         # Copy Persona to server
-        Copy-Item -Path $($script:MyALPersona + "\*") -Recurse -Destination $script:ALLocalPersonaLocation -Force -WhatIf
-   
+        Copy-Item -Path $($script:MyALPersona + "\*") -Recurse -Destination $script:ALLocalPersonaLocation -Force
+
+        # Sleep
+        Start-Sleep -Seconds '30'
+
         # Start AL Service
-        $script:ALService | Start-Service -Force | Out-Null
+        $script:ALService | Start-Service | Out-Null
         $script:ALService | Set-Service -StartupType Automatic
     }
     else {
 
         Write-Debug 'No Persona Found -- Creating One'
 
-        $script:ALService | Start-Service -Force | Out-Null
+        $script:ALService | Start-Service | Out-Null
         $script:ALService | Set-Service -StartupType Automatic
 
         # Create Persona Container
         New-Item -Path $script:MyALPersona -ItemType Directory
 
         # Copy Persona to Rep
-        Copy-Item -Path $($script:ALLocalPersonaLocation + "\*") -Recurse -Destination $script:MyALPersona -Force -WhatIf
+        Copy-Item -Path $($script:ALLocalPersonaLocation + "\*") -Recurse -Destination $script:MyALPersona -Force
 
     }
-   
 }
 
 # Detect if this server is a citrix gold image - if not run
