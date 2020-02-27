@@ -40,32 +40,6 @@ function Start-Connection {
     
 }
 
-function get-CirixVMInfo {
-
-    $date = (Get-Date).AddDays(-1)
-    $citrix_vm = get-provvm -AdminAddress $script:delivery_controller
-
-    foreach ($s in $citrix_vm) {
-        Write-Host "Server Name: $($s.ADAccountName.TrimEnd('$'))"
-        Write-Host "Last Boot: $($s.LastBootTime)"
-        Write-Host "Cut Off Time: $date"
-
-        if ($s.LastBootTime -lt $date) {
-            Write-Host -ForegroundColor Red 'Has not rebooted in 24 hours'
-
-            $obj = New-Object -TypeName psobject
-            $obj | Add-Member -MemberType NoteProperty -Name 'Server Name' -Value $($s.ADAccountName.TrimEnd('$'))
-            $obj | Add-Member -MemberType NoteProperty -Name 'Creation Date' -Value $($s.CreationDate)
-            $obj | Add-Member -MemberType NoteProperty -Name 'Last Boot' -Value $($s.LastBootTime)
-            $obj | Add-Member -MemberType NoteProperty -Name 'Cut Off Time' -Value $date
-
-            $script:report_vm += $obj
-        }
-    }
-    write-host ""
-
-}
-
 # Find Citrix Servers in MX
 function Get-CitrixPSStatus {
     [CmdletBinding()]
@@ -81,12 +55,14 @@ function Get-CitrixPSStatus {
             Write-Debug "MX mode: $($ps.InMaintenanceMode)"
             Write-Debug "Power Status: $($ps.PowerState)`n"
 
+            # Create object with presentation server information.
             $obj = New-Object -TypeName psobject
             $obj | Add-Member -MemberType NoteProperty -Name 'Server Name' -Value $($ps.HostedMachineName)
             $obj | Add-Member -MemberType NoteProperty -Name 'Server Status' -Value $($ps.RegistrationState)
             $obj | Add-Member -MemberType NoteProperty -Name 'MX Mode' -Value $($ps.InMaintenanceMode)
             $obj | Add-Member -MemberType NoteProperty -Name 'Power State' -Value $($ps.PowerState)
 
+            # Add object to presentation report.
             $script:report_ps += $obj
         }
     }
@@ -111,12 +87,14 @@ function Get-HungSessions {
             Write-Debug "User Name: $($bs.UserName)"
             Write-Debug "Citrix PS: $($bs.HostedMachineName)`n"
 
+            # Create object with broker session data.
             $obj = New-Object -TypeName psobject
             $obj | Add-Member -MemberType NoteProperty -Name 'User Name' -Value $($bs.UserName)
             $obj | Add-Member -MemberType NoteProperty -Name 'Citrix PS' -Value $($bs.HostedMachineName)
             $obj | Add-Member -MemberType NoteProperty -Name 'Session State Change Time' -Value $($bs.SessionStateChangeTime)
             $obj | Add-Member -MemberType NoteProperty -Name 'Cut Off Time' -Value $date
 
+            # Add object to broker report.
             $script:report_bs += $obj
         }
     }
@@ -127,16 +105,19 @@ function Send-Report {
 
     param ()
 
+    # If there are any PS servers in our report object add to our final report.
     if ($report_ps) {
         $report_pt1 = $script:report_ps | ConvertTo-Html -Pre "<h3>Citrix Presentation Servers</h3><p>The following servers are in MX mode or uninitialized" -Fragment | Out-String
         $script:avail_reports += $report_pt1
     }
 
+    # If there are any BS sessions disconnected longer than the specified time in our report object add to final report.
     if ($report_bs) {
         $report_pt2 = $script:report_bs | ConvertTo-Html -Pre "<h3>Broker Sessions</h3><p>Each session below has been disconnected for longer than the expected cutoff time ($($script:time_limit) minutes).</p>" -Fragment | Out-String
         $script:avail_reports += $report_pt2
     }
 
+    # Send report if there is any data in final reports.
     if ($script:avail_reports) {
         $final_report = (ConvertTo-Html -Head $Header -PostContent $script:avail_reports -PreContent "<h2>Citrix Health Report</h2>" | Out-String) -replace "(?sm)<table>\s+</table>"
         Send-MailMessage -To $script:send_to -From $script:send_from -Body $final_report -BodyAsHtml -SmtpServer $script:mail_server -Subject "$(Get-Date -Format d) - Citrix Health Report"
