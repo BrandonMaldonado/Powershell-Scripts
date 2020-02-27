@@ -36,8 +36,6 @@ function Start-Connection {
     catch {
         Write-Debug "Unable to connect to " $script:delivery_controller
     }
-
-    
 }
 
 # Find Citrix Servers in MX
