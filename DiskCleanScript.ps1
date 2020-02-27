@@ -4,8 +4,8 @@ $ip = (Get-NetIPConfiguration | Where-Object { ($_.IPv4DefaultGateway -ne $null)
 
 Function IsUEFI {
 
-    <#
-.Credit
+<#
+.CREDIT
    Chris J Warwick
    https://gallery.technet.microsoft.com/scriptcenter/Determine-UEFI-or-Legacy-7dc79488
 .Synopsis
