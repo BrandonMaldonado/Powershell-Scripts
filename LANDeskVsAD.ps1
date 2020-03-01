@@ -1,14 +1,14 @@
 # Load Modules
 Import-Module ActiveDirectory
 
-$From = "noreply@domain.com"
-$To = "teamone@domain.com"
-$Cc = "teamtwo@domain.com"
-$Subject = (Get-Date).ToString("%d-MMMM-yyyy") + " - Active Directory vs LANDesk"
-$SMTPServer = "mailserver.domain.com"
+$from = "landesk@contoso.com"
+$to = "team_one@contoso.com"
+$cc = "team_two@contoso.com"
+$subject = (Get-Date).ToString("%d-MMMM-yyyy") + " - Active Directory vs LANDesk"
+$smtpServer = "mailserver.contoso.com"
 
 # Define HTML Report Header Style
-$Header = @"
+$header = @"
 <style>
 body { font-size:12px; font-family:Verdana, Geneva, sans-serif;}
 TABLE {border-width: 1px; border-style: solid; border-color: black; border-collapse: collapse;}
@@ -20,45 +20,46 @@ tr:nth-child(odd) {background: #FFF}
 "@
 
 # Get ALL AD Computers and Export
-$ADdata = get-adcomputer -Filter * -searchbase "OU=Computers,DC=domain,DC=com" | 
+$adData = get-adcomputer -Filter * -searchbase "OU=computers,DC=contoso,DC=com" | 
 Select-Object @{ Name = "Device Name"; Expression = { $_. "Name" } } | Sort-Object 'Device Name' -Unique
 
-# Connect to Property LanDesk and Export
-# Replace with your LANDesk server and ensure you have permissions to access the API.
-$ldWS = New-WebServiceProxy -Uri https://<YOUR LANDESK SERVER>/MBSDKService/MsgSDK.asmx?WSDL -UseDefaultCredential
-$ldWS.ResolveScopeRights() | Out-Null
+# Connect to LANDesk and Export
+$ldws = New-WebServiceProxy -Uri 'https://landesk.contoso.com/MBSDKService/MsgSDK.asmx?WSDL' -UseDefaultCredential
+$ldws.ResolveScopeRights() | Out-Null
 
 # Query in LanDesk will just list all workstations in the enviorment.
-$LDlist = $ldWS.RunQuery("<INSERT QUERY NAME>") 
+$ldList = $ldws.RunQuery("All_Windows_Devices") 
 
-# Hashtables
-$LANDeskTable = @{}
-$ADTable = @{}
+# Create Hashtables
+$ldTable = @{}
+$adTable = @{}
 
 # Varibles
 $missingPCs = @()
 
 # Process datasets and add to hashtable
-$LDlist.Tables[0].Rows | ForEach-Object {$LANDeskTable[$_.'Device Name'] = $_.Data }
-$ADdata | ForEach-Object  { $ADTable[$_.'Device Name'] = $_.Data }
+$ldList.Tables[0].Rows | ForEach-Object { $ldTable[$_.'Device Name'] = $_.Data }
+$adData | ForEach-Object { $adTable[$_.'Device Name'] = $_.Data }
 
 # Compare hashtables
-foreach($PC in $ADTable.Keys){
-  if($LANDeskTable.ContainsKey($PC) -eq $false){
-    $item = New-Object PSObject
-    $item | Add-Member -type NoteProperty -Name 'Device Name' -Value $PC
-    $missingPCs += $item
-  }
+foreach ($pc in $adTable.Keys) {
+    if ($ldTable.ContainsKey($pc) -eq $false) {
+        $item = New-Object PSObject
+        $item | Add-Member -type NoteProperty -Name 'Device Name' -Value $pc
+        $missingPCs += $item
+    }
 }
 
-Write-Host ''
+# Print final report to console
+Write-Host ""
 Write-Host -ForegroundColor DarkMagenta 'Missing Devices:'
 $missingPCs | Sort-Object 'Device Name' | Format-Table -HideTableHeaders
-Write-Host ''
+Write-Host ""
 
-if($missingPCs){
-  $HTMLReport = $missingPCs | Sort-Object 'Device Name' | ConvertTo-Html -property 'Device Name' -Head $Header -pre "<h1>Active Directory vs LANDesk</h1><p><b>Generated:</b> $(get-date)<br /><b>Total Records Processed:</b> $($missingPCs | Measure | Select-Object Count | ft -HideTableHeaders | Out-String)</p> <P>PCs on this list either: Need to be removed from Active Directory or added to LanDesk immediately"
+if ($missingPCs) {
+    # Generate Report
+    $HTMLReport = $missingPCs | Sort-Object 'Device Name' | ConvertTo-Html -property 'Device Name' -Head $Header -pre "<h1>Active Directory vs LANDesk</h1><p><b>Generated:</b> $(get-date)<br /><b>Total Records Processed:</b> $($missingPCs | Measure | Select-Object Count | ft -HideTableHeaders | Out-String)</p> <P>PCs on this list either: Need to be removed from Active Directory or added to LanDesk immediately"
 
-  # Email Report
-  Send-MailMessage -To $To -Cc $Cc -From $From -SmtpServer $SMTPServer -Subject $Subject -Body ($HTMLReport | Out-String) -BodyAsHtml
+    # Send Email
+    Send-MailMessage -To $to -Cc $cc -From $from -SmtpServer $smtpServer -Subject $subject-Body ($HTMLReport | Out-String) -BodyAsHtml
 }
